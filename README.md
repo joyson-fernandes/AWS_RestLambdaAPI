@@ -1,6 +1,6 @@
-# AWS Serverless Employee Management System
+# AWS Serverless Employee Management System (CRUD)
 
-This project demonstrates how to set up an AWS serverless architecture using AWS Lambda, DynamoDB, and API Gateway to manage employee data.
+This project demonstrates how to set up an (CRUD) AWS serverless architecture using AWS Lambda, DynamoDB, and API Gateway to manage employee data.
 
 ## Prerequisites
 
