@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input, button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Employee Management</h1>
+
+<!-- Status Check -->
+<h3>Service Status:</h3>
+<button onclick="checkStatus()">Check Status</button>
+<p id="status"></p>
+
+<!-- Get Employee -->
+<h3>Get Employee:</h3>
+<input type="text" id="employeeId" placeholder="Employee ID" />
+<button onclick="getEmployee()">Get Employee</button>
+<p id="employeeResult"></p>
+
+<!-- Add Employee -->
+<h3>Add Employee:</h3>
+<input type="text" id="addEmployeeData" placeholder="Employee Data (JSON)" />
+<button onclick="addEmployee()">Add Employee</button>
+<p id="addResult"></p>
+
+
+<!-- Update Employee -->
+<h3>Update Employee:</h3>
+<input type="text" id="updateEmployeeId" placeholder="Employee ID" />
+<input type="text" id="updateKey" placeholder="Key to Update" />
+<input type="text" id="updateValue" placeholder="New Value" />
+<button onclick="updateEmployee()">Update Employee</button>
+<p id="updateResult"></p>
+
+<!-- Delete Employee -->
+<h3>Delete Employee:</h3>
+<input type="text" id="deleteEmployeeId" placeholder="Employee ID" />
+<button onclick="deleteEmployee()">Delete Employee</button>
+<p id="deleteResult"></p>
+
+<script>
+    const apiUrl = 'https://47qh8hut37.execute-api.us-east-1.amazonaws.com/production'; // Replace with your API Gateway URL
+
+    async function checkStatus() {
+        try {
+            const response = await fetch(`${apiUrl}/status`);
+            console.log('Response status:', response.status); // Log response status
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // Get the plain text response
+            const message = await response.text();
+            document.getElementById('status').innerText = message; // Display the message
+
+        } catch (error) {
+            console.error('Error fetching status:', error);
+            document.getElementById('status').innerText = `Error fetching status: ${error.message}`;
+        }
+    }
+
+
+    async function getEmployee() {
+    const employeeId = document.getElementById('employeeId').value;
+    try {
+        const response = await fetch(`${apiUrl}/employee?employeeid=${employeeId}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Get the response as JSON
+        const data = await response.json();
+        console.log('Employee data:', data); // Log for debugging
+
+        // Check if the response contains the expected employee fields
+        if (data) {
+            // Here, access the fields directly from data
+            const employeeInfo = `
+                ID: ${data.employeeid} <br />
+                Full Name: ${data.full_name} <br />
+                Job Title: ${data.job_title} <br />
+                Salary: ${data.Salary} <br />
+            `;
+            document.getElementById('employeeResult').innerHTML = employeeInfo; // Update the employee info element
+        } else {
+            document.getElementById('employeeResult').innerText = 'No employee found.';
+        }
+
+    } catch (error) {
+        console.error('Error fetching employee:', error);
+        document.getElementById('employeeResult').innerText = `Error fetching employee: ${error.message}`;
+    }
+}
+
+    async function addEmployee() {
+    const employeeData = document.getElementById('addEmployeeData').value;
+    
+    try {
+        const response = await fetch(`${apiUrl}/employee`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: employeeData // Assuming this is already JSON formatted
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json(); // Parse the JSON response
+        console.log('Add Employee response:', data); // Log for debugging
+
+        // Check if the response contains the expected fields
+        if (data && data.Message) {
+            const resultInfo = `
+                Operation: ${data.Operation} <br />
+                Message: ${data.Message} <br />
+                Added Employee: ${JSON.stringify(data.Item, null, 2)}
+            `;
+            document.getElementById('addResult').innerHTML = resultInfo; // Display result details
+        } else {
+            document.getElementById('addResult').innerText = 'Failed to add employee or unexpected response structure.';
+        }
+
+    } catch (error) {
+        console.error('Error adding employee:', error);
+        document.getElementById('addResult').innerText = `Error adding employee: ${error.message}`;
+    }
+}
+
+
+
+
+    async function updateEmployee() {
+    const employeeId = document.getElementById('updateEmployeeId').value.trim();
+    const updateKey = document.getElementById('updateKey').value.trim();
+    const updateValue = document.getElementById('updateValue').value.trim();
+
+    // Basic validation
+    if (!employeeId || !updateKey || !updateValue) {
+        document.getElementById('updateResult').innerText = 'All fields must be filled.';
+        return;
+    }
+
+    const requestData = {
+        employeeId: employeeId,
+        updateKey: updateKey,
+        updateValue: updateValue
+    };
+
+    console.log('Update Employee Data:', JSON.stringify(requestData)); // Debugging log
+
+    try {
+        const response = await fetch(`${apiUrl}/employee`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Update Employee response:', data); // Log the response for debugging
+
+        // Safely access the message and updated attributes
+        if (data && data.Message) {
+            // Access the updated attribute dynamically based on the updateKey.
+            const updatedValue = data.UpdatedAttributes && data.UpdatedAttributes.Attributes ? data.UpdatedAttributes.Attributes[updateKey] : 'N/A';
+            const resultInfo = `
+                Operation: ${data.Operation} <br />
+                Message: ${data.Message} <br />
+                Updated ${updateKey}: ${updatedValue}  <!-- Dynamically display the updated field -->
+            `;
+            document.getElementById('updateResult').innerHTML = resultInfo;
+        } else {
+            document.getElementById('updateResult').innerText = 'Failed to update employee or unexpected response structure.';
+        }
+    } catch (error) {
+        console.error('Error updating employee:', error);
+        document.getElementById('updateResult').innerText = `Error updating employee: ${error.message}`;
+    }
+}
+
+
+
+    async function deleteEmployee() {
+    const employeeId = document.getElementById('deleteEmployeeId').value.trim();
+
+    // Basic validation
+    if (!employeeId) {
+        document.getElementById('deleteResult').innerText = 'Employee ID must be filled.';
+        return;
+    }
+
+    try {
+        const response = await fetch(`${apiUrl}/employee`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ employeeId: employeeId }) // Sending the employeeId as a JSON string
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Delete Employee response:', data); // Log the response for debugging
+
+        // Safely access the message and item attributes
+        if (data && data.Message) {
+            // Access the deleted employee's details
+            const deletedAttributes = data.Item && data.Item.Attributes ? data.Item.Attributes : {};
+            const resultInfo = `
+                Operation: ${data.Operation} <br />
+                Message: ${data.Message} <br />
+                Deleted Employee: <br />
+                Job Title: ${deletedAttributes.job_title || 'N/A'} <br />
+                Full Name: ${deletedAttributes.full_name || 'N/A'} <br />
+                Salary: ${deletedAttributes.Salary || 'N/A'}
+            `;
+            document.getElementById('deleteResult').innerHTML = resultInfo;
+        } else {
+            document.getElementById('deleteResult').innerText = 'Failed to delete employee or unexpected response structure.';
+        }
+    } catch (error) {
+        console.error('Error deleting employee:', error);
+        document.getElementById('deleteResult').innerText = `Error deleting employee: ${error.message}`;
+    }
+}
+
+</script>
+
+</body>
+</html>
