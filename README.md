@@ -66,63 +66,8 @@ This project demonstrates how to set up an AWS serverless architecture using AWS
    - Click on **Create Function**.
 
 3. **Add Lambda Function Code**:
-   - In the code editor, enter the following Lambda function code:
-   ```python
-   import json
-   import boto3
-   from botocore.exceptions import ClientError
-   from decimal import Decimal
-
-   # Initialize the DynamoDB client
-   dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
-   dynamodb_table = dynamodb.Table('employee_info')
-
-   def lambda_handler(event, context):
-       print('Request event: ', event)
-       response = None
-       
-       try:
-           http_method = event.get('httpMethod')
-           path = event.get('path')
-
-           if http_method == 'GET' and path == '/status':
-               response = build_response(200, 'Service is operational')
-           elif http_method == 'POST' and path == '/employee':
-               response = save_employee(json.loads(event['body']))
-           # Add additional methods for GET, PATCH, DELETE if required
-           else:
-               response = build_response(404, '404 Not Found')
-
-       except Exception as e:
-           print('Error:', e)
-           response = build_response(400, 'Error processing request')
-       
-       return response
-
-   def save_employee(request_body):
-       try:
-           dynamodb_table.put_item(Item=request_body)
-           body = {
-               'Operation': 'SAVE',
-               'Message': 'SUCCESS',
-               'Item': request_body
-           }
-           return build_response(200, body)
-       except ClientError as e:
-           print('Error:', e)
-           return build_response(400, {'Message': e.response['Error']['Message']})
-
-   def build_response(status_code, body):
-       return {
-           'statusCode': status_code,
-           'headers': {
-               'Content-Type': 'application/json',
-               'Access-Control-Allow-Origin': '*'  # Adjust as necessary
-           },
-           'body': json.dumps(body, cls=DecimalEncoder)
-       }
-
-   # Include rest of your code
+   - In the code editor, enter the from lambda_function.py
+ 
 4. **Deploy the Lambda Function**:
    - After entering your code, click **Deploy** to save your changes.
 
